@@ -1,0 +1,656 @@
+---
+title: "Sekhar_Mekala_HW5"
+author: "Sekhar Mekala"
+date: "Tuesday, November 01, 2016"
+output: pdf_document
+---
+
+##Problem 1
+
+### a) 
+
+The transition matrix is given below:
+
+```{r}
+p <- matrix(c(.9,.05,.03,.02,0,.85,.09,.06,0,0,.9,.1,1,0,0,0),byrow=TRUE,nrow=4)
+print(p)
+```
+
+### b) 
+Given that the new state always starts in low state. Therefore the probabilities of various states after 3 weeks are given below:
+  
+
+```{r}
+library(expm)
+
+#Initial state
+x <- matrix(c(1,0,0,0),byrow=TRUE,nrow=1)
+x %*% (p %^% 3)
+```
+
+Therefore, the probability that the machine will be in failed state after 3 weeks is 0.0277
+
+### c)
+
+Let us find the probabilities of failures in the first, second and third weeks:
+
+First week's probability of failure is obtained as follows:
+```{r}
+x %*% (p %^%1)[,4]
+```
+
+Second week's probability of failure is obtained as follows:
+```{r}
+x %*% (p %^%2)[,4]
+```
+
+Third week's probability of failure is obtained as follows:
+```{r}
+x %*% (p %^%3)[,4]
+```
+
+Let us assume the following events:
+  
+* _E1_ that the machine fails in the first week. Its probability = _P(E1)_ = 0.02
+
+* _E2_ that the machine fails in the second week. Its probability = _P(E2)_ = 0.024
+
+* _E3_ that the machine fails in the third week. Its probability = _P(E3)_ = 0.0277
+
+Therefore the probability of _E1_ or _E2_ or _E3_ is obtained as:
+  
+$$P(E_1 \cup E_2 \cup E_3) = P(E_1) + P(E_2)+ P(E_3) - P(E_1 \cap E_2) - P(E_2 \cap E_3) - P(E_1 \cap E_3) + P(E_1 \cap E_2 \cap E_3)$$
+  
+Since _E1_, _E2_ and _E3_ are independent, 
+$$P(E_1 \cap E_2) = (0.02)(0.024)=0.00048$$
+$$P(E_2 \cap E_3) = (0.024)(0.0277)=0.0006648$$
+$$P(E_1 \cap E_3) = (0.02)(0.0277)=0.000554$$  
+$$P(E_1 \cap E_2 \cap E_3) = (0.02)(0.024)(0.0277)=0.000013296$$
+
+Hence, the probability of at least one failure in first 3 weeks is 0.0700145
+
+##d)
+
+Let us find the steady state probability can be found by solving the following equation, where a, b, c and d represent the low, medium, high and failed states probabilities respectively in steady state:
+  
+$$\left[ \begin{array}{cccc} a & b & c & d\end{array} \right]\left[ \begin{array}{cccc} 0.9 & 0.05 & 0.03 & 0.02 \\ 0.0 & 0.85 & 0.09  & 0.06 \\ 0.0 & 0.00 & 0.90 & 0.10 \\ 1.0 & 0.00 & 0.00 & 0.00\end{array} \right] = \left[ \begin{array}{cccc} a & b & c & d\end{array} \right]$$
+
+After solving the above equation, we obtained 
+$$a = p(low) = 0.4918033$$
+$$b = p(medium) = 0.1639344$$
+$$c = p(high) = 0.295082$$
+$$d = p(failed) = 0.04918033$$
+
+Hence the average number of weeks for the first failure = 1/0.04918033 = `r 1/0.04918033` weeks
+
+##e) 
+
+On an average the number of weeks the machine works in 1 year = 52X0.4918033 = `r 0.4918033 * 52` weeks
+
+##f) 
+Average profit in long run is:
+
+$$\left[ \begin{array}{cccc} 0.4918033 & 0.1639344 & 0.295082 & 0.04918033\end{array} \right].\left[ \begin{array}{c} 1000 \\ 500 \\ 400 \\ -700\end{array} \right]$$
+
+
+```{r}
+matrix(c(0.4918033, 0.1639344, 0.295082, 0.04918033),nrow=1,byrow=TRUE) %*% 
+  matrix(c(1000, 500, 400, -700),nrow=4,byrow=TRUE)
+```
+Hence, a profit of \$657.3771 is obtained per week.
+
+##g)
+
+When the machine is repaired soon after it is in the high state, then the tarnsition matrix will be:
+
+```{r}
+p <- matrix(c(.9,.05,.03,.02,0,.85,.09,.06,1,0,0,0,1,0,0,0),byrow=TRUE,nrow=4)
+p
+```
+
+Let us find the steady state probability for the new transition matrix. I can be found by solving the following equation, where a, b, c and d represent the low, medium, high and failed states probabilities respectively in steady state:
+  
+$$\left[ \begin{array}{cccc} a & b & c & d\end{array} \right]\left[ \begin{array}{cccc} 0.9 & 0.05 & 0.03 & 0.02 \\ 0.0 & 0.85 & 0.09  & 0.06 \\ 1.0 & 0 & 0 & 0 \\ 1.0 & 0.00 & 0.00 & 0.00\end{array} \right] = \left[ \begin{array}{cccc} a & b & c & d\end{array} \right]$$
+
+After solving the above equation, we obtained 
+$$a = p(low) = 0.6976744$$
+$$b = p(medium) = 0.2325581$$
+$$c = p(high) = 0.04186047$$
+$$d = p(failed) = 0.02790698$$
+
+Hence, the average profit per week will be:
+
+$$\left[ \begin{array}{cccc} 0.6976744 & 0.2325581 & 0.04186047 & 0.02790698\end{array} \right].\left[ \begin{array}{c} 1000 \\ 500 \\ 400 \\ -700\end{array} \right]$$
+
+```{r}
+matrix(c(0.6976744, 0.2325581, 0.04186047, 0.02790698),nrow=1,byrow=TRUE) %*% 
+  matrix(c(1000, 500, -600, -700),nrow=4,byrow=TRUE)
+```
+Hence, a profit of \$769.3023 is obtained per week. Since the profit is more in this case, it is suggested to repair the machine soon after it reaches the high state.
+
+
+##Problem-2
+
+The following R code uses Metropolis-Hastings algorithm to estimate the $\theta$ value:
+  
+```{r}
+
+#Initialize the observed counts 
+count <- c(125,18,20,34)
+
+#Create a probability function
+prob <- function(y, count)
+{
+  #Computes the target density
+  if(y < 0 || y >= 1)
+    return(0)
+  return((2+y)^count[1]*(1-y)^(count[2]+count[3])*y^count[4])
+  
+}
+
+
+w <- 0.5 #width of uniform support set
+m <- 5000 #length of the chain
+burn <- 1000 #burn in time
+animals <- 197
+
+
+u <- runif(m)
+v <- runif(m,-w,w)
+
+x[1] <- .5
+for(i in 2:m)
+{
+  y <- x[i-1] + v[i]
+  if(u[i] <= prob(y,count)/prob(x[i-1],count))
+    x[i] <- y else
+      x[i] <- x[i-1]
+  
+}
+
+hist(x)
+
+xb <- x[(burn+1):m]
+theta <- mean(xb)
+
+theta
+#posterior distribution
+p <- c(.5+theta/4,(1-theta)/4,(1-theta)/4,theta/4)
+p
+#p*197
+```
+
+Hence the $\theta=0.6187743$
+
+Therefore the posterior distribution will be: (`r p`)
+
+
+
+##Problem 3:
+
+
+
+$\lambda =$ Mean of the data before the change point
+
+$\phi =$ Mean of the data after the change point
+
+$m=$ Change point
+
+$\beta=$ Scale parameter for the distribution of $\lambda$
+
+$\delta=$ Scale parameter for the distribution of $\phi$
+
+
+The following R code will obtain the following parameters (will run for 5000 iterations):
+
+
+```{r}
+#Read the coal data set
+
+library(boot)
+data(coal)
+ 
+year <- floor(coal)
+y <- table(year)
+ 
+#plot(y)
+
+
+y <- floor(coal[[1]])
+ 
+y <- tabulate(y)
+ 
+y <- y[1851:length(y)]
+ 
+
+#plot(y)
+ 
+# Initialization
+n <- length(y) #Length of data
+ 
+m <- 5000 #length of chain
+ 
+mu <- lambda <- k <- b1 <- b2 <- numeric(m)
+ 
+L <- numeric(n)
+ 
+k[1] <- sample(1:n,1)
+mu[1] <- 1
+lambda[1] <- 1
+b1[1] <- 1
+b2[1] <- 1
+ 
+#Run the Gibbs sampler
+ 
+for(i in 2:m)
+{
+  kt <- k[i-1]
+  
+  #generate mu
+  r <- .5 + sum(y[1:kt])
+  mu[i] <- rgamma(1, shape=r,rate=kt+b1[i-1])
+  
+  #generate lambda
+  if(kt+1 > n) 
+    r <- .5 +sum(y) 
+  else
+    r <- .5 + sum(y[(kt+1):n])
+  lambda[i] <- rgamma(1,shape=r,rate=n-kt+b2[i-1])
+  
+  #generate b1 and b2
+  b1[i] <- rgamma(1,shape=.5,rate=mu[i]+1)
+  b2[i] <- rgamma(1,shape=.5,rate=lambda[i]+1)
+  
+  for(j in 1:n)
+  {
+    L[j] <- exp((lambda[i] - mu[i]) * j) * 
+             (mu[i] / lambda[i])^sum(y[1:j])
+    
+  }
+  
+  L <- L / sum(L)
+  
+  #Generate k from discrete dist L on 1:n
+  k[i] <- sample(1:n,prob=L, size=1)
+}
+ 
+ 
+phi <- lambda 
+lambda <- mu
+m <- k
+beta <- b1
+delta <- b2
+
+mean(phi)
+sd(phi)
+
+mean(lambda)
+sd(lambda)
+
+mean(m)
+sd(m)
+```
+
+##a) 
+```{r}
+
+#par(mfrow=c(1,1))
+#Histogram of lambda
+hist(lambda)
+
+#Histogram of phi
+hist(phi)
+
+#Histogram of m
+hist(m)
+
+#Plot of lambda vs phi
+plot(lambda,phi,main="plot of lambda vs phi")
+
+
+#Plot of lambda vs m
+plot(lambda,m,main="plot of lambda vs m")
+
+#Plot of beta vs delta
+plot(beta,delta,main="plot of beta vs delta")
+
+```
+
+
+##b)
+
+The change point has occured after `r mean(m)` years. The 95% confidence interval is `r mean(m)` $\pm(1.96)$ (`r sd(m)`) = [`r mean(m)-1.96*sd(m)`,`r mean(m)+1.96*sd(m)`]
+
+The average number of accidents before change point = `r mean(lambda)`/year and average number of accidents after change point = `r mean(phi)`/year
+
+Let us plot the time series of the observations:
+
+```{r}
+year <- floor(coal)
+y <- table(year)
+ 
+plot(y,main="Number of Accidents between 1851 and 1962",ylab="Number of accidents")
+
+```
+
+We can clearly see that after approximately 40 years (around 1891), the number of accidents have drastically decreased. Our results obtained are consistent with the time series of observed data, since we see a drastic decrease in the accidents after 40 years.
+
+##c)
+Gibbs sampling is a special case of Metropolis-Hastings method. In Gibbs sampling we do not reject any sample, and Gibbs sampling is often applied when the target distribution is multi-variate.
+
+
+
+
+##Problem-4
+
+```{r echo=FALSE}
+
+#Read the cost matrix
+
+cost <- matrix(c(0,633,257,91,412,
+150,80,134,259,505,353,324,70,
+211,268,246,121,633,
+0,390,661,227,
+488,572,530,555,
+289,282,638,567,
+466,420,745,518,
+257,390,0,228,
+169,112,196,154,
+372,262,110,437,
+191,74,53,472,
+142,91,661,228,
+0,383,120,77,
+105,175,476,324,
+240,27,182,239,
+237,84,412,227,
+169,383,0,267,
+351,309,338,196,
+61,421,346,243,
+199,528,297,150,
+488,112,120,267,
+0,63,34,264,360,
+208,329,83,105,
+123,364,35,80,
+572,196,77,351,
+63,0,29,232,444,292,297,
+47,150,207,332,
+29,134,530,154,
+105,309,34,29,
+0,249,402,
+250,314,
+68,108,
+165,349,
+36,259,
+555,372,
+175,338,
+264,232,
+249,0,
+495,352,
+95,189,
+326,383,
+202,236,
+505,289,
+262,476,
+196,360,
+444,402,
+495,0,
+154,578,
+439,336,
+240,685,
+390,353,
+282,110,
+324,61,
+208,292,
+250,352,
+154,0,
+435,
+287,
+184,
+140,
+542,
+238,
+324,
+638,
+437,
+240,
+421,
+329,
+297,
+314,
+95,
+578,
+435,
+0,
+254,
+391,
+448,
+157,
+301,
+70,
+567,
+191,
+27,
+346,
+83,
+47,
+68,
+189,
+439,
+287,
+254,
+0,
+145,
+202,
+289,
+55,
+211,
+466,
+74,
+182,
+243,
+105,
+150,
+108,
+326,
+336,
+184,
+391,
+145,
+0,
+57,
+426,
+96,
+268,
+420,
+53,
+239,
+199,
+123,
+207,
+165,
+383,
+240,
+140,
+448,
+202,
+57,
+0,
+483,
+153,
+246,
+745,
+472,
+237,
+528,
+364,
+332,
+349,
+202,
+685,
+542,
+157,
+289,
+426,
+483,
+0,
+336,
+121,
+518,
+142,
+84,
+297,
+35,
+29,
+36,
+236,
+390,
+238,
+301,
+55,
+96,
+153,
+336,
+0),byrow=TRUE,nrow=17)
+```
+
+
+The cost matrix is displayed below:
+
+```{r}
+cost
+```
+
+Let us write a function that finds the cost of a potential solution:
+
+```{r}
+ 
+find_cost <- function(cost_matrix,solution)
+  {
+    y <- numeric(16)
+    for(i in 1:16)
+    {
+          y[i] <- cost_matrix[solution[i],solution[i+1]]
+      
+    }
+    return(sum(y))
+  }
+
+```
+
+
+The simulated annealing algorithm is defined below:
+
+```{r}
+simulated_annealing <- function(T0, drop,n,cost_matrix)
+  { 
+    
+    #Get the number of cities
+    s <- nrow(cost_matrix)
+    
+    #Declare a matrix to store all the solutions
+    accepted_solution <- matrix(rep(0,170000),
+                                byrow=TRUE,nrow=10000)
+    
+    #Vector to store all costs
+    c_1 <- vector()
+    
+    #Initial solution
+    solution_1 <- sample(1:s,s)
+    
+    #Initial cost
+    c_1[1] <- find_cost(cost_matrix,solution_1)
+    
+    #Initial accepted solution
+    accepted_solution[1,] <- solution_1
+    
+    for(i in 2:n)     
+      {
+        #Get the 2 elements randomly
+        index <-  sort(sample(1:s,s)[1:2])
+
+        #Prepare a second solution
+        solution_2 <- 
+          c(solution_1[1:ifelse(index[1] == 1, 1, 
+                              (index[1]-1))],
+            solution_1[(ifelse(index[2]==17,16,
+                               index[2])):ifelse(index[1]==1,2,index[1])],
+            solution_1[ifelse((index[2])==17,17,
+                              (index[2]+1)):17])
+         
+         #Find the cost of the current solution or solution-2
+         c_1[i] <- find_cost(cost_matrix,solution_2)
+        
+        #If solution-2 is better than solution-1, then accept solution-2 blindly
+        if(c_1[i-1] > c_1[i])
+                {
+                accepted_solution[i,] <- solution_2
+                T0 <- T0 * drop
+                solution_1 <- solution_2
+                } else
+                {
+                    p <- exp((c_1[i-1] - c_1[i])/T0)
+                    u <- runif(1)
+                    if(p > u)
+                      {
+                    accepted_solution[i,] <- solution_2
+                     }
+                    else{
+                      c_1[i] <- c_1[i-1]
+                      accepted_solution[i,] <- solution_1
+                     }
+                   T0 <- T0 * drop
+               }
+
+      }
+   return(list(solution=accepted_solution,cost=c_1,T0=T0))
+  
+}
+
+#Get the cost of the best solution 
+l <- simulated_annealing(1, 0.9999,10000,cost)
+
+l$cost[10000]
+
+#Let us get the cost of a random path
+x <- sample(1:17,17)
+
+find_cost(cost,x)
+```
+
+The cost of the best solution is `r l$cost[10000]`, while the cost of the random path is: `r find_cost(cost,x)`. 
+
+The optimal path obtained using the algorithm is:
+
+```{r}
+l$solution[10000,]
+```
+
+Let us plot the iterations vs the cost of the solution in the respective iteration:
+
+```{r}
+plot(l$cost)
+```
+
+We can infer that after approximately 300 iterations, the cost has stabilized.
+
+
+Repeating the simulated annealing for 4 times to find how the cost of the optimal solution is varying
+```{r}
+set.seed(1234)
+l1 <- simulated_annealing(1, 0.9999,10000,cost)
+l2 <- simulated_annealing(1, 0.9999,10000,cost)
+l3 <- simulated_annealing(1, 0.9999,10000,cost)
+l4 <- simulated_annealing(1, 0.9999,10000,cost)
+
+l1$solution[10000,]
+l1$cost[10000]
+l2$solution[10000,]
+l2$cost[10000]
+l3$solution[10000,]
+l3$cost[10000]
+l4$solution[10000,]
+l4$cost[10000]
+```
+
+The optimal solution's cost does not vary a lot, but the optimal solution is drastically different in different repetitions.
+

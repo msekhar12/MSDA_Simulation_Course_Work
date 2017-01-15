@@ -1,0 +1,167 @@
+---
+title: "Sekhar_HW7"
+author: "Sekhar Mekala"
+date: "Sunday, November 20, 2016"
+output: pdf_document
+---
+
+#Problem 9.14 (DES)
+
+Reading and sorting the data into a variable, and dividing the cumulative sum of the data by 100 (distance between the cities is 100 Kilometers).
+
+```{r}
+x <- c(88.3,40.7,36.3,27.3,36.8,
+       91.7,67.3,7.0,45.2,23.3,
+       98.8,90.1,17.2,23.7,97.4,
+       32.4,87.8,69.8,62.6,99.7,
+       20.6,73.1,21.6,6.0,45.3,
+       76.6,73.2,27.3,87.6,87.2)
+
+x <- sort(x)
+x
+```
+
+Let us define the hypothesis:
+
+$H_0: \mbox{The above values is uniformally distributed}$
+
+$H_a: \mbox{The above values is NOT uniformally distributed}$
+
+We have to use a significance level of $\alpha=0.05$ to test our hypothesis.
+
+```{r}
+library(knitr)
+y <- vector()
+x <- x/100
+
+N <- length(x)
+
+i <- 1:N
+A=x
+B=i/N
+C=((i/N) - x)
+D=(x-(i-1)/N)
+
+df <- data.frame(A,B,C,D)
+
+df
+```
+In the above table, "A" represents the distance of the accident divided by the distance between the cities (100 KM). The data is sorted in ascending order. The column "B" represents the value $i/N$, where $i$ is the sequence of numbers from 1 to N (Number of observations), and $N$ is the number of observations (which is 30). The column "C" represents $i/N - R_{(i)}$, where $R_{(i)}$ is the values in column "A", and the column D represents $R_{(i)} - (i-1)/N$. 
+
+The $D^+ = max(column "C")$ = `r max(df$C)`
+The $D^- = max(column "D")$ = `r max(df$D)`
+
+Hence $D = max(D^-, D^+)$ = `r max(max(df$C),max(df$D))`
+
+At 30 degrees of freedon, and 0.05 significance level, the Kolmogorov-Smirnov critical value is $D_\alpha$ = 0.24. Since D is less than $D_\alpha$, we are unable to reject the null hypothesis, and the given data is uniformly distributed.
+
+
+
+#Problem 9.17 (DES)
+
+Reading the data to a data frame:
+
+```{r}
+Employee <- 1:50
+
+Time <- c(1.88,.54,1.9,.15,.02,2.81,1.5,.53,
+          2.62,2.67,3.53,.53,1.8,.79,.21,.8,.26,.63,.36,2.03,
+          1.42,1.28,.82,2.16,.05,.04,1.49,.66,2.03,1,.39,.34,.01,
+          .1,1.1,.24,.26,.45,.17,4.29,.8,5.5,4.91,.35,.36,.9,1.03,1.73,.38,.48)
+#hist(Time)
+df <- data.frame(Employee,Time)
+df
+```
+
+Let us define the hypothesis:
+
+$H_0: \mbox{The Time data is exponentially distributed}$
+
+$H_a: \mbox{The above values is NOT exponentially distributed}$
+
+Let $k=6$, then each interval will have probability $p$ as $1/6$. 
+
+The end point of each interval is calculated as:
+
+$$a_i = -(1/\lambda) ln(1-ip)$$ where $i = 0,1,2,3,4,5,6$
+
+$$\lambda = 1/mean(Time) = 0.8291874$$
+
+Using the above formulae, we can get the following table:
+
+```{r}
+lambda <- 1/mean(Time)
+a <- (-1/lambda)*(log(1-(0:6)/6))
+
+Class_Interval <- paste(a[1:5],"-",a[2:6],sep=" ")
+Class_Interval <- c(Class_Interval,paste(a[6]," - Infinity",sep=""))
+
+Observed <- vector()
+
+for(i in 2:7){
+Observed[i-1] <- sum(Time>=a[i-1] & Time < a[i])
+}
+
+df <- data.frame(Class_Interval,Observed_Freq=Observed,Expected_Freq=50/6)
+
+df$Chi_sq <- ((df$Observed_Freq - df$Expected_Freq)^2/df$Expected_Freq)
+df
+sum(df$Chi_sq)
+
+```
+
+The degrees of freedom = 6 - 1 -1 = 4. The $\chi^2_{0.05}$= 9.488. Since the calculated $\chi^2$ (2.8) is less than $\chi^2_{0.05}$( 9.488), we are unable to reject the null hypothesis. Hence the Time variable is exponentially distributed.
+
+#Problem 10.1(A) (DES)
+
+Given the following data:
+
+```{r}
+x <- c(18.9,22,19.4,22.1,19.8,21.9,20.2)
+x
+```
+The average value of the sample is $\bar{x}$ = `r mean(x)` and the Standard deviation of the sample $S$ = `r sd(x)`. 
+
+Let us define the hypothesis:
+
+$$H_0: \mu = 22.5$$
+
+$$H_a: \mu \neq  22.5$$
+
+The desired significance level is $\alpha = 0.05$
+
+We have to perform the two side hypothesis test, with the sample mean $\bar{x}$ = `r mean(x)` and the standard error $S$ = `r sd(x)/sqrt(length(x))`.
+
+The confidence interval at 0.05 level of significance is [`r qnorm(0.025,mean=22.5,sd=sd(x)/sqrt(7))`, `r qnorm(0.975,mean=22.5,sd=sd(x)/sqrt(7))`].
+
+Since the sample mean (`r mean(x)`) does not lie in the confidence interval, we reject the null hypothesis.
+
+#Problem 10.1(B) (DES)
+
+Let us compute the Type-II error.
+
+$$\delta = |20.61429 - 22.5|/1.355764 = 1.390884$$
+
+Using the operating characteristic curves given in Table A.10 (Appendix A) in DES book, we can identify that the probability of accepting null hypothesis, when it is false is approximately 0.1, hence the probability of rejecting the null hypothesis when it is indeed fasle is 0.9 (which is the power of the test). To make the power of test as atleast 0.8, the sample size should be greater than or equal to 6.
+
+
+#Problem 11.13 (DES)
+
+See the attached simio file for the detailed experiment results.
+
+* Job 1 average system time is 117.82 hours. The 95% Conf. Interval is [115, 123] hours
+
+* Job 2 average system time is 97.5542 hours. The 95% Conf. Interval is [94.13, 102.5] hours
+
+* Job 3 average system time is 85.1304 hours. The 95% Conf. Interval is [83, 87] hours
+
+* Job 4 average system time is 47.1026 hours. The 95% Conf. Interval is [40, 50] hours
+
+* Station 1 utilization is 99%. The 95% Conf. Interval is [97.8167, 100] %
+
+* Station 2 utilization is 95.5%. The 95% Conf. Interval is [91, 99.5] %
+
+* Station 3 utilization is 100%. The 95% Conf. Interval is [100, 100] %
+
+* Station 4 utilization is 97.65%. The 95% Conf. Interval is [90.93, 100] %
+

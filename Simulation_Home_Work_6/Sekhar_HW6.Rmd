@@ -1,0 +1,184 @@
+---
+title: "Sekhar_HW6"
+author: "Sekhar Mekala"
+date: "Friday, November 18, 2016"
+output: pdf_document
+---
+
+#Problem 1
+
+A. We need 1 source, 1 sink, and 5 servers. The source object generates random customers (10 customers per hour on an average or average time between arrivals is 6 minutes with exponential distribution), the first server object performs the checkin work (and the processing time at this server is 5 minutes on an average), once the processing at the first server is complete, the customer moves to any of the available 2 servers (where the average processing time is 8.8 minutes), and finally the customer chooses one of the last 2 servers, where the average processing time is approximately 9 minutes. All the average times are assumed to be exponentially distributed with the given average times. 
+
+B. The screen shots of simio models are shown below:
+
+All the components of the model are shown in the following figure. All the paths are zero minute time paths (since we do not know how much time the customer spends in walking between the stations):
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig1.png)
+
+"Source" object parameters
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig2.png)
+
+"Server-1" parameters are shown below
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig3.png)
+
+"Server-2" parameters are shown below
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig4.png)
+
+"Server-3" parameters are shown below
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig5.png)
+
+"Server-4" parameters are shown below
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig6.png)
+
+"Server-5" parameters are shown below
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig7.png)
+
+
+C. The simulation has been run for 24 hours. In these 24 hours a total of 230 customers have visited the facility, and 217 customers were processed (13 customers were still in the system at the end of simulation). The average time spent by the customer in the system is 1.43 hours (85.8 minutes), and the maximum time spent by a customer is 3.68 hours. On an average, there are 13.58 members present in the system. The "server-1" utilization is 78.45%, "server-2" utilization is 83.5%, "server-3" utilization is 59%, "server-4" utilization is 75%, and "server-5" utilization is 70%. Server-2 has processed 113 customers, server-3 has processed 110 customers, server-4 has processed 114 customers, and server-5 has processed 105 customers. We found that a total of 230 customers have arrived at the facility. This is almost equal to the expected number of customers (which is 240 customers in 24 hours, since 10 customers arrive per hour, on an average).
+
+D. When one of the exam administrators are replaced with a computer kiosk (which can handle 2 customers at a time, with the same processing speed as that of the human exam administrator), then we need to modify the server 2 capacity as 2 customers. See the below screen shot, for "server-2" parameters:
+
+![fig1](C:\Users\Sekhar\Documents\R Programs\Simulation\HW6\fig8.png)
+
+#Problem 2
+
+The following R code will simulate the proposed M/M/1 system:
+
+```{r}
+lambda = 1/10 
+mu = 1/7
+
+set.seed(100)
+
+N = 1000
+
+Arrival_Time <- rexp(N,rate=lambda)
+Service_Time <- rexp(N,rate=mu)
+Queue_Length <- vector(length = N)
+Arrival_Time <- cumsum(Arrival_Time)
+Service_Begin_Time <- vector(length=N)
+Service_End_Time <- vector(length=N)
+
+Service_Begin_Time[1] <- Arrival_Time[1]
+Service_End_Time[1] <- Arrival_Time[1] + Service_Time[1]
+
+for(i in 2:N)
+{
+  if(Service_End_Time[i-1] > Arrival_Time[i])
+  {
+    Service_End_Time[i] = Service_End_Time[i-1] + Service_Time[i]
+    Service_Begin_Time[i] = Service_End_Time[i-1]
+  }
+  else
+  {
+    Service_Begin_Time[i] = Arrival_Time[i]
+    Service_End_Time[i] = Service_Begin_Time[i] + Service_Time[i]
+  }
+}
+
+Server_Busy_Time = Service_End_Time - Service_Begin_Time
+
+Idle_Time <- c(Service_Begin_Time[1],Service_Begin_Time[2:N] - Service_End_Time[1:(N-1)])
+
+df <- data.frame(Arrival_Time=Arrival_Time,Service_Time=Service_Time,
+                 Service_Begin_Time=Service_Begin_Time,
+                 Service_End_Time=Service_End_Time, Server_Busy_Time=Server_Busy_Time,Server_Idle_Time=Idle_Time)
+df$Customer_Wait_Time <- df$Service_Begin_Time - df$Arrival_Time
+
+Queue_Length[1] = 0
+for(i in 2:N)
+{ k = 0
+  for(j in (i-1):1)
+  {
+    if(Arrival_Time[i] < Service_End_Time[j]) 
+    {
+      k = k+1
+    }
+    else
+    {
+      Queue_Length[i] = k
+      break
+    }
+    
+  }
+  
+}
+
+
+df$Queue_Length = Queue_Length
+df$System_Time = (df$Service_End_Time - df$Arrival_Time)
+
+#Service Utilization = sum(df$Server_Busy_Time)/df$Service_End_Time[N]
+#Average number of customers waiting in the queue = sum(df$Queue_Length+1)/1000
+#Average system time = sum(df$Service_Completion - df$Arrival_Time)/1000
+
+```
+
+Service Utilization = `r sum(df$Server_Busy_Time)/df$Service_End_Time[N]`
+
+Average number of customers waiting in the queue = `r sum(df$Queue_Length)/N`
+
+Average system time = `r sum(df$Service_End_Time - df$Arrival_Time)/N` minutes
+
+Theoritically, Service uitlization ($\rho$) = $\lambda/\mu$ = $(1/10)/(1/7) = 0.7$
+
+Average Time in queue = $(\rho^2)/(1-\rho)$ = 1.6333
+
+Average Time in system = $1/(\mu.(1-\rho))$ = $(1/((1/7)*0.3) = 23.333$ minutes
+
+As per Simio, we obtained the following details:
+
+Service utilization = 0.6957
+
+Average number of customers waiting in the queue = 1.4396
+
+Average system time = 0.3585 hours = 21.51 minutes
+
+
+#Problem 3 (6.1 in DES)
+
+Mean time between arrivals (or $1/\lambda$) = 4 minutes. Hence, $\lambda$ = 1/4 customers per minute
+
+Mean Service time (or $1/\mu$) = 3 minutes. Hence, $\mu$ = 1/3 customers per minute
+
+Cost of customer = \$15 per hour = \$15/60 per minute = \$0.25 per min
+
+Cost of server = \$10 per hour = \$10/60 per minute = \$1/6 per min = \$0.17
+
+
+One server's average utilization ($\rho$) = $\lambda/\mu$ = 3/4 = 0.75
+
+Time spent by the customer in the system with 1 server = $1/(\mu(1-\rho))$ = $1/((1/3)(1-(3/4))$ = 12 minutes. Hence average cost due to time spent in the system by the customer = 12*0.25 = \$3.
+
+Therefore total average cost per minute = \$3 + \$0.17 = \$3.17 per minute
+
+If another server is hired, then the server utilization will be ($\rho$) = $\lambda/(2\mu)$ = 3/8 = 0.375
+
+Time spent by the customer in the system with 2 servers = $1/(\mu(1-\rho))$ = $1/((1/3)(1-0.375))$ = 4.8 minutes. Hence average cost due to time spent in the system by the customer = 4.8*0.25 = \$1.2.
+
+
+Therefore total average cost per minute (with 2 servers) = \$1.2 + 2(\$0.17) = \$1.54 per minute
+
+Since the average cost of system with 2 servers (\$1.54) is lesser than the system with only 1 server (\$3.17), it is recommended to hire another server.
+
+#Problem 3 (6.2 in DES)
+
+Average waiting time in $M/M/1$ queue can be expressed as:
+
+$$w_Q = \lambda/(\mu(\mu-\lambda))$$
+
+In the problem, it is given that, average time to serve (or land) = $1/\mu$ = $(3/2)$. Therefore number of planes landing per minute = $\mu$ = $2/3$
+
+Average waiting time = $w_Q = 3 minutes$
+
+We need to find $\lambda$ in $3 = \lambda/((2/3)(2/3 - \lambda))$ equation. 
+
+Upon solving, we get $\lambda=4/9$ planes per minute or average time between arrivals must be 9/4 minutes.
+
+

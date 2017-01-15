@@ -1,0 +1,715 @@
+---
+title: "Simulation Home Work 3"
+author: "Sekhar Mekala"
+date: "September 27, 2016"
+output: pdf_document
+---
+
+**1. Starting with $X_0 = 1$, write down the entire cycle for $X_i = 11X_i-1 \mbox{  mod (16)}$.**
+
+**Answer:**
+
+We can have a maximum of 16 unique numbers, since we are using $mod \mbox{} 16$. 
+
+If we use $x_0 = 1$ as the seed, then we will get the following sequence of random numbers
+
+```{r}
+rm(list=ls())
+
+library(knitr)
+
+#Create a vector of length 16
+x <- vector(length=16)
+
+#Initialize the first number to 1
+x[1] <- 1
+
+#Generate the remaining elements
+for(i in 2:16)
+   {
+     x[i] = (11*x[i-1]) %% 16
+}
+
+#Create the data frame for display
+#df <- data.frame(x=x)
+df=data.frame(Random_Number=x)
+
+#Display the data frame
+
+kable(df)
+
+```
+
+As per the above display, after generating 4 numbers (1,11,9,3), the numbers repeat. Hence the entire cycle is $1,11,9,3$
+
+
+##2. Using the LCG provided below: $X_i = (X_{i-1} + 12) mod (13)$, plot the pairs $(U_1, U_2), (U_2, U_3),.,$ and observe the lattice structure obtained. Discuss what you observed.
+
+##Answer:
+Let us generate the sequence first, by using a seed say 100. 
+
+```{r}
+
+#Create a vector of length 14 (13 random elements, and the initial element for the seed).
+x <- vector(length=14)
+
+#Initialize the first element to 100. But you can pick any number as the seed.
+x[1] <- 100
+
+#Generate the random numbers
+for(i in 2:14)
+{
+  x[i] <- (x[i-1] + 12) %% 13
+}
+
+#Display the generated random numbers 
+df <- data.frame(Random_Number=x[-1])
+kable(df)
+```
+
+We used 100 as the seed to generate the above displayed random numbers. The random series begins at 8. This number will change if we use a different seed.  The difference between the consecutive random numbers displayed above is 1, till the series reaches 0. After reaching 0, the series again begins at 12, and the consecutive random numbers have a difference of 1. 
+
+Let us plot the consecutive pairs (x1,x2)(x2,x3)...(x13,x14). Note that the (x13,x14) is the same as (x1,x2), since the cycle repeats after 13 numbers (since mod 13 is used):
+
+
+```{r}
+
+#Discard the seed
+x <- x[-1]
+
+#Initialize the y-coordinate
+y <- x[-1]
+
+y[13] <- x[1]
+
+x[14] <- x[1]
+y[14] <- y[1]
+
+
+df <- data.frame(x_coordinate=x,y_coordinate=y)
+
+kable(df)
+```
+
+ 
+```{r}
+plot(x,y,xlab=expression(x[n-1]),
+     ylab=expression(x[n]),main="Figure:2.1 Plot between the consecutive pairs of x")
+lines(x,y)
+```
+
+From the above display we can make the following conclusions:
+
+* Based on the seed value, the initial random number is generated. This initial random number is always one of the numbers between 0 and 12. In the above example, we used seed as 100, and this had begun the numbers from 8. If we use 200 as the seed, then the first random number will be 4
+
+* Except the first random number, the subsequent random numbers are always one less than the previous random number, till they reach 0, and, once they reach 0, the number 12 is generated, and the consecutive random numbers are decremented again by 1. This cycle is repeated.
+
+
+![variables](C:\Users\Sekhar\Documents\R Programs\Simulation\HW3\Q3.png)
+
+##Answer
+
+Let us calculate the chi-square value.
+
+```{r}
+
+#Create a vector of length 100000
+x <- vector(length=100000)
+
+#Initialize the first random number generated using the seed value 1234567
+x[1] <- (1234567*16807)%%(2147483647)
+
+#Generate the remaining random integers
+for(i in 2:100000)
+{
+  x[i] = (16807*x[i-1])%%(2147483647)
+  
+}
+
+#Divide by 2^31, to make the numbers belonging to U[0,1]
+x <- x/2^31
+
+#Create 20 intervals
+intervals <- seq(from=0.05,to=1,by=0.05)
+
+#Let us create O vector. This will contain the number of observations
+#within each of the 20 intervals
+
+O <- vector(length=20)
+
+O[1] <- sum(x <= intervals[1])
+
+for(i in 1:19)
+{
+  O[i+1] <- sum((intervals[i] < x & x <= intervals[i+1]))
+}
+
+#Let us create the expected value in each interval
+E <- rep(100000/20,20)
+
+#Getting O - E
+O_E <- O - E
+
+#Squaring the difference
+O_E_sq <- (O_E)^2
+
+#Dividing teh squared difference by E 
+O_E_sq_div_E <- O_E_sq/E
+
+#preparing a data frame
+df <- data.frame(O,E,O_E,O_E_sq,O_E_sq_div_E)
+kable(df)
+
+```
+
+Let us state the null and alternate hypothesis:
+
+$$H_0: \mbox{ }R \sim Uniform[0,1]$$
+$$H_a: \mbox{ }R \nsim Uniform[0,1]$$
+
+
+We will get the $\chi^2$ value as `r sum(O_E_sq/E)`. At 19 degrees of freedom, the p-value associated with this value is `r pchisq(sum(O_E_sq/E), 19, ncp = 0, lower.tail = FALSE, log.p = FALSE)`, which is way higher than the desired significance level, 0.05. Hence, we are unable to reject the null hypothesis. Therefore, the numbers are uniformly distributed.
+
+###Runs up-and-down test of independence
+
+In Runs up-and-down test we get the difference between the consecutive random numbers, and whenever there is a change in the sign of the resultant consecutive numbers difference, we count the change as a run. If $a$ is the total number of runs in a truly random sequence, the mean and variance of a is given by 
+$$\mu_a = \frac{2N-1}{3}$$
+$$\sigma_a^2 = \frac{16N - 29}{90}$$
+
+Where N = number of observations, and if $N > 20$ then the distribution of the runs can be approximated by normal distribution with the mean $\mu_a$ and variance $\sigma_a^2$ (computed using the above formulae).
+
+Since N = 100000 for our data, we can compute $\mu_a = \frac{200000 - 1}{3} = 66666.33$ and variance, $\sigma_a^2 = \frac{1600000 - 29}{90} = 17777.46$
+
+Let us obtain the runs of the generated random data. 
+
+```{r}
+
+#Get the difference between the the consecutive random numbers
+y <- x[-1] - x[-length(x)]
+
+#Initialize the runs counter
+a <- 0
+
+#Check how often the sign changes
+for(i in 2:length(y))
+{
+  #Increment the counter only when the sign changes
+  if((y[i-1] < 0 & y[i] >= 0) |(y[i-1] >= 0 & y[i] < 0) )
+  {
+    a <- a+1
+  }
+
+}
+
+
+#Refer to the below website to know about the run up-down testing
+#http://www.eg.bucknell.edu/~xmeng/Course/CS6337/Note/master/node44.html
+
+#Find the p-value
+mu <- (2*100000-1)/3
+sd <- sqrt((16*100000 - 29)/90)
+
+#pnorm((r - mu)/sd)
+```
+
+Let us state the following hypothesis:
+
+$$H_0: \mbox{ }R \sim \mbox{are independent}$$
+$$H_a: \mbox{ }R \nsim \mbox{are independent}$$
+
+We obtained $66734$ runs, and the p-value associated with this value is `r pnorm((a - mu)/sd)`. The confidence interval at 0.05 significance level is $[66405.01,66927.66]$. Since the runs obtained lies within the confidence interval range, we are unable to reject the null hypothesis, and hence the generated random numbers are independent.
+
+![variables](C:\Users\Sekhar\Documents\R Programs\Simulation\HW3\Q4.png)
+
+##Answer
+
+Given that the PDF as $f(x) = \frac{3x^2}{2} \mbox{, when }-1 \le x \le 1$
+
+###Inverse-transform method
+
+Let us draw the PDF between the intervals $[-1,1]$
+
+```{r}
+library(ggplot2)
+
+myfun <- function(x)
+{
+  3*x^2/2
+  
+}
+
+ggplot(data.frame(x=c(-1,1)),aes(x))+
+  stat_function(fun=myfun,color="blue")+
+  geom_vline(xintercept = 0)+
+  geom_hline(yintercept = 0)+
+  labs(title="Figure:4.1 Plot of 3x^2/2 between [-1,1] interval")
+```
+
+The function is symmetrical on the y-axis. So we will use the CDF between the interval $[0,1]$ and use the inverse transform method to obtain a random number, r, between $[0,1]$ for the PMF function $3x^2/2$, and generate another random number (say y), and if y<=0.5, then we return r, else we return -r. This way we can generate the random numbers for the PMF $3x^2/2$ between $[-1,1]$.
+
+Let us obtain CDF between $[0,1]$:
+
+$$\int_0^x 3y^2/2 dy = x^3/2$$
+
+The above obtained CDF will be equated to a random number R, generated using the uniform distribution between the interval $[0,1]$.
+
+$$x^3/2 = R$$
+$$x = (2R)^{1/3}$$
+
+Now, we will generate another random number $y$ having uniform distribution between $[0,1]$. If y <= 0.5, then we return x, else -x
+
+The following R code will implement this logic:
+
+
+
+```{r,warning=FALSE}
+
+my_rand <- function(){
+  #Generate a uniform Random number
+  
+  R <- runif(1,0,1)
+  
+  #Getting the value of x
+  x <- (2 * R)^(1/3)
+  
+  #Decide the sign
+  x <- ifelse(runif(1,0,1) <=0.5,x,-x)
+  return(x)
+}
+
+#Generating 100000 samples
+x <- replicate(100000,my_rand())
+x <- x[x<=1 & x>= -1]
+hist(x,main="Figure:4.2 Histogram of random numbers belonging to 3x^2/2 PMF, 
+     \ngenerated by Inverse method")
+
+```
+
+The figure 4.2 matches the distribution of the function $3x^2/2$ displayed in figure 4.1
+
+###Composition method:
+
+The interval $[-1,1]$ can be divided into $[-1,0]$ and $[0,-1]$, and obtain the two CDF functions:
+
+CDF-1 between the interval $[-1,0]$
+
+$$\int_x^{0} 3y^2/2 dy = \frac{-x^3}{2}$$
+
+The inverse of CDF-1 will be:
+
+$$x=(-2R)^{(1/3)} = -(2R)^{(1/3)} \mbox{, when you ignore the complex numbers}$$
+
+CDF-2 between the interval $[0,1]$
+
+$$\int_0^{x} 3y^2/2 dy = \frac{x^3}{2}$$
+
+The inverse of CDF-2 will be:
+
+$$x=(2R)^{(1/3)}$$
+
+We will generate 2 uniform random numbers $R_1$ and $R_2$, and if $R_1$ is less than or equal to 0.5, then we will use inverse CDF-1 function to get a random number using $R_2$, else we will use the inverse CDF-2 function to get a random number using $R_2$.
+In this generation process, if we get any number outside $[-1,1]$, then we will ignore that random number.
+
+The following R code will implement this logic:
+
+```{r}
+
+rand <- function()
+{
+
+repeat{
+  #Generate 2 random numbers from Unif dist.
+  R1 <- runif(1)
+  R2 <- runif(1)
+
+  
+if(R1 <= 0.5){
+  x <- (-(2*R2)^(1/3))
+}
+else
+  {
+  x <- ((2*R2)^(1/3))
+  }
+if(x >= -1 & x <= 1)
+  {return(x)}
+}
+
+}
+
+
+
+```
+
+Let us generate some sample values using the R code (based on the composition method), given above:
+
+```{r}
+x <- replicate(10000,rand())
+hist(x,main="Figure 4.3 Histogram of random numbers belonging to 3x^2/2 PMF, 
+     \ngenerated by composition method")
+```
+
+The figure 4.3 matches the distribution of the function $3x^2/2$ displayed in figure 4.1
+
+###Accept-Reject method
+
+For the PDF $f(x) = 3x^2/2$, in the interval [-1,1], we can say that another function $g(x) = 3/2$ is strictly greater than or equal to the given pdf. We can write the following expression:
+
+We will generate two random numbers $R_1$ and $R_2$ from the uniform distribution, $U[0,1]$, and if $$R1 \leq \frac{f(R_2)}{g(R_2)}$$, then return $R_2$ as the random number, else repeat the procedure. Given the symmetric nature of the function $f(x) = 3x^2/2$, we will return positive random number and negative random numbers with equal probability.
+
+$$\frac{f(x)}{g(x)} = \frac{3x^2/2}{3/2} = x^2$$
+
+Hence, if $R_1 \leq R_2^2$, then return $R_2$ as the random number, else repeat. The sign or $R_2$ is either positive or negative with equal probability. The following R code implements the discussed logic of accept-reject method:
+
+```{r}
+rand <- function()
+{
+repeat{
+R1 <- runif(1)
+R2 <- runif(1)
+
+if(R1 <= R2^2)
+{x <- R2
+  break}
+}
+  x <- ifelse(runif(1)<= 0.5,x,-x)
+  return(x)
+ 
+}
+
+x <- replicate(100000,rand())
+hist(x,main="Figure 4.4 Histogram of random numbers belonging to 3x^2/2 PMF, 
+     \ngenerated by accept-reject method")
+```
+
+The figure 4.4 matches the distribution of the function $3x^2/2$ displayed in figure 4.1
+
+##Problem-5a
+
+The inverse of a normal CDF is not easy to compute, but we can use an approximate of the inverse of the normal CDF function (as discussed in http://www.m-hikari.com/ams/ams-password-2008/ams-password9-12-2008/alodatAMS9-12-2008-2). We will use the following approximation to normal CDF:
+
+$$x = \sqrt{-\sqrt{\frac{8}{\pi}}log(1-(p-0.5)^2)}, \mbox{ where p = random number from U[0,1]}$$
+
+We will use the above formula to generate random numbers which are normally distributed. The sign (+/-) of the random number is also decided randomly with equal probability.
+
+The following R code will perform this:
+
+```{r}
+rm(list=ls())
+
+library(knitr)
+library(ggplot2)
+library(pander)
+library(reshape2)
+
+normrandit <- function()
+{
+  #Generating 1 uniform random number
+  p <- runif(1)
+  plus_or_minus <- sample(x=c(-1,1),1)
+  return(plus_or_minus * sqrt(-log(1-(2*p -1)^2)/sqrt(pi/8)))
+}
+
+#Creating another function itstats()
+
+itstats <- function(N)
+{
+  x <- replicate(N,normrandit())
+  return(list(mean=mean(x),std_dev = sd(x)))
+  
+}
+
+#Calling itstats() function with 100000 as the input.
+itstats(100000)
+
+```
+
+The generated mean is approximately 0, and the standard deviation is approximately 1.
+
+##Problem-5b
+
+Let us use the Box-Muller algorithm to generate the random numbers. The function normrandbm() is defined to implement the Box-Muller method:
+
+```{r}
+
+normrandbm <- function()
+{
+U <- runif(1)
+V <- runif(1)
+X <- sqrt(-2*log(U)) * cos(2*pi*V)
+Y <- sqrt(-2*log(U)) * sin(2*pi*V)
+return(c(X,Y))
+}
+ 
+bmstats <- function(N)
+{
+  x <- replicate(N,normrandbm())
+  return(list(mean=mean(x),std_dev=sd(x)))
+}
+
+bmstats(100000)
+
+
+```
+
+When the function bmstats() is ran with 100000 as the input, it produced approximately a 0 mean and approximately 1 as the standard deviation.
+
+
+##5C. Generation of random numbers from normal distribution using accept-reject approach
+
+The normrandr() function generates a random number from std. normal distribution using accept-reject method.
+
+```{r}
+
+normrandar <- function()
+{
+  repeat{
+  U1 <- runif(1)
+  U2 <- runif(1)
+
+  X <- -log(U1)
+  Y <- -log(U2)
+
+  if(Y >= (X-1)^2/2){
+    sign <- sample(c(-1,1),1)
+    return(sign*X)
+  }
+  }
+}
+
+arstats <- function(N)
+{
+  x <- replicate(N,normrandar())
+  return(list(mean=mean(x),std_dev=sd(x)))
+}
+
+arstats(100000)
+```
+
+When the function arstats() is executed with 100000 it has returned a std. dev of 1 (approximately), and a mean of 0 (approximately).
+
+##Problem 5D.
+
+Let us test the three functions created with various sample sizes:
+
+```{r}
+N= c(100,1000, 10000,100000)
+
+#Set the seed to 100
+set.seed(100)
+
+df_print <- data.frame()
+for(j in 1:length(N))
+  {
+
+  mean_1 <-vector()
+
+  mean_2 <-vector()
+
+  mean_3 <-vector()
+
+  sd_1 <-vector()
+
+  sd_2 <-vector()
+
+  sd_3 <-vector()
+
+  t1 <- vector()
+  t2 <- vector()
+  t3 <- vector()
+
+  
+        for(i in 1:10)
+        {
+        t <- system.time(L <- itstats(N[j]))
+        t1[i] <- t[2]
+        mean_1 <- c(mean_1,L$mean)
+        sd_1 <- c(sd_1,L$std_dev)
+        
+        t <- system.time(L<-bmstats(N[j]))
+        t2[i] <- t[2]
+        
+        mean_2 <- c(mean_2,L$mean)
+        sd_2 <- c(sd_2,L$std_dev)
+        
+        t <- system.time(L<-arstats(N[j]))
+        t3[i] <- t[2]
+        mean_3 <- c(mean_3,L$mean)
+        sd_3 <- c(sd_3,L$std_dev)
+        
+        }
+
+  df_print <- rbind(df_print,data.frame(N=N[j],
+                                        itstats_mean=mean(mean_1),
+                                        itstats_sd=mean(sd_1),
+                                        itstats_CPU = mean(t1),
+                                        bmstats_mean=mean(mean_2),
+                                        bmstats_sd=mean(sd_2),
+                                        bmstats_CPU = mean(t2),
+                                        arstats_mean=mean(mean_3),
+                                        arstats_sd=mean(sd_3),
+                                        arstats_CPU = mean(t3)
+                                      ))
+        
+  }
+
+library(pander)
+pander(df_print, split.table = 120, 
+       style = 'rmarkdown',
+       caption="Performance of three methods")
+
+```
+
+Let us plot the bar chart for the mean obtained for three methods at various values of N.
+
+```{r}
+
+library(reshape2)
+
+df_print$N <- factor(df_print$N)
+df <- melt(df_print[,c("N","itstats_mean","bmstats_mean","arstats_mean")],id.vars="N")
+
+library(ggplot2)
+
+ggplot(df,aes(N,value,fill=variable))+
+  geom_bar(stat="identity",position="dodge")+
+  labs(title="Avg. values obtained by three methods",x="N (Sample size)",y="Avg. value")
+```
+
+Let us plot the bar chart for the standard deviations obtained for three methods at various values of N.
+
+```{r}
+df <- melt(df_print[,c("N","itstats_sd","bmstats_sd","arstats_sd")],id.vars="N")
+
+ggplot(df,aes(N,value,fill=variable))+
+  geom_bar(stat="identity",position="dodge")+
+  labs(title="Std. deviations obtained by three methods",x="N (Sample size)",y="Std. Dev")
+```
+
+The plots show that as the number of samples generated increase, the mean value approaches 0, and std. dev. reaches to 1. But of all the three methods, the Accept/Reject method performed the best, since the mean value obtained by this method is always closer to 0, when compared to other methods, for all the tested sample sizes. 
+
+Let us plot the CPU time for the three methods, at various sample sizes:
+
+```{r}
+df <- melt(df_print[,c("N","itstats_CPU","bmstats_CPU","arstats_CPU")],id.vars="N")
+
+ggplot(df,aes(N,value,fill=variable))+
+  geom_bar(stat="identity",position="dodge")+
+  labs(title="CPU times for three methods",x="N (Sample size)",y="CPU Time in seconds")
+```
+
+The CPU time increases as the number of samples increase. But I was getting different CPU times for the three methods for a sample size of 100000, for different runs. And since the CPU times cannot be controlled by a seed, I am not offering any further explanation about the CPU times. From the accuracy point of view, Accept-Reject method has the greater level of accuracy even for smaller sample sizes. But, as the sample sizes increase, the accuracy of all the methods have increased.
+
+##Problem 5E.
+
+Let us plot the histograms for the three methods, with sample size of 1000000
+
+```{r}
+
+par(mfrow=c(2,2))
+
+hist(replicate(1000000,normrandit()),
+     main="Histogram of sample values for\n inverse transform method \n with 1000000 samples",
+     xlab="Random number")
+
+hist(replicate(1000000,normrandbm()),
+     main="Histogram of sample values for\n Box-Muller method \n with 1000000 samples",
+     xlab="Random number")
+
+hist(replicate(1000000,normrandar()),
+     main="Histogram of sample values for\n accept-reject method \n with 1000000 samples",
+     xlab="Random number")
+
+par(mfrow=c(1,1))
+```
+
+All the three methods have generated almost identical distributions, which are identical to normal distribution.
+
+
+##Problem 6
+
+Let use create "insidecircle()" that takes two inputs between 0 and 1 and returns 1 if these points fall within the unit circle.
+
+```{r}
+insidecircle <- function(U1,U2)
+  {
+    ifelse(sqrt(U1^2+U2^2) <= 1, 1, 0)
+  
+  }
+
+```
+
+Let us create "estimatepi()" function that takes N as input, and generates N pairs of random numbers having Uniform distribution, and calculates $\pi$ based on the number of points that fall within the quarter circle, inscribed in a unit square. Let us assume that the proportion of points that fall within the quarter circle as $p$ and the points that do not fall within the circle will be $1-p$. Therefore the std. error can be found as:
+
+$$SE = \sqrt{\frac{p.(1-p)}{N}}$$
+
+
+```{r}
+estimatepi <- function(N)
+  {
+    U1 <- runif(N)
+    U2 <- runif(N)
+
+    points <- insidecircle(U1,U2)
+    
+    sqrt(mean(points)*(1-mean(points)))
+    sd(points)/sqrt(N)
+    
+    p <- mean(points)
+    se <- sqrt(p*(1-p)/N)
+    pi <- 4*p
+    
+    max <- pi + 1.96*se
+    min <- pi - 1.96*se
+    return(list(pi=pi,std_error=se,CI_min=min,CI_max=max))  
+  }
+
+```
+
+##Problem 6C
+
+Let us run the estimatepi() function for N=1000 to 10000 in increments of 500
+
+```{r}
+set.seed(10)
+cnt <- seq(from=1000,to=10000,by=500)
+
+
+df <- data.frame()
+
+for(i in 1:length(cnt))
+  {
+    l <- estimatepi(cnt[i])
+    
+    df <- rbind(df,data.frame(N=cnt[i],pi=l$pi,std_error=l$std_error,CI_min=l$CI_min,CI_max=l$CI_max))
+    
+  
+  }
+
+kable(df)
+```
+
+Let us find for what sample size does the $\pi$ value estimated is within the range of 0.1 from the true $\pi$ value.
+
+```{r}
+min_sample <- cnt[which(abs((df$pi - pi))<=0.1)[1]]
+
+```
+
+Therefore with `r cnt[which(abs((df$pi - pi))<=0.1)[1]]` sample size we can get an estimate of $\pi$, that is within the $\pm0.1$ range.
+
+##Problem 6d
+
+Using the value of N = 1000, let us run the estimatepi() for 500 times and collect 500 estimates of $\pi$
+
+```{r}
+set.seed(10)
+e_pi <- replicate(500,estimatepi(1000)$pi)
+par(mfrow=c(1,1))
+mean(e_pi)
+sd(e_pi)
+hist(e_pi,main="Histogram of estimated pi",xlab="Estimated pi")
+```
+
+The $\pi$ value obtained is `r mean(e_pi)` and std error is `r sd(e_pi)`. In problem 6c, we obtained a std. error of `r df$std_error[which(df$N == min_sample)]`. The std error `r sd(e_pi)` obtained here is different from the standard error obtained in problem 6c for a sample size of `r cnt[which(abs((df$pi - pi))<=0.1)[1]]`.
+
+The percentage of samples obtained in this problem that are within the control interval range obtained for the sample size of `r min_sample` is `r mean(e_pi >= df$CI_min[which(df$N == min_sample)] & e_pi <= df$CI_max[which(df$N == min_sample)])*100`%.
